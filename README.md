@@ -10,3 +10,5 @@ Todo :
        2. Separate 'Show & Change List' as another activity
        
        3. Make Play button as Album Art(?)
+
+       4. Design
