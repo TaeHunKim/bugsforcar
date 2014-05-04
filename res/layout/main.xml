@@ -4,48 +4,30 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
+    <ImageView
+        android:id="@+id/album_cover"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:layout_gravity="center"
+        android:src="@drawable/album_cover" />
+
+    <TextView
+        android:id="@+id/txt_artist"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+		android:layout_weight="0.5"
+		android:layout_gravity="center"
+        android:textColor="#ffffff"
+        android:textSize="20sp" />
+    
     <TextView
         android:id="@+id/txt_title"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal" >
-
-        <Button
-            android:id="@+id/btn_pre"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="onPlayer"
-            android:text="previous" />
-
-        <Button
-            android:id="@+id/btn_play"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="onPlayer"
-            android:text="play/pause" />
-
-        <Button
-            android:id="@+id/btn_next"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="onPlayer"
-            android:text="next" />
-    </LinearLayout>
-
-    <ListView
-        android:id="@+id/list"
-        android:layout_width="match_parent"
-        android:layout_height="0dip"
-        android:layout_margin="0dip"
-        android:layout_weight="1"
-        android:cacheColorHint="@android:color/transparent"
-        android:fadingEdge="none"
-        android:fastScrollEnabled="true"
-        android:listSelector="@android:color/transparent" />
+		android:layout_weight="0.5"
+		android:layout_gravity="center"
+        android:textColor="#ffffff"
+        android:textSize="20sp" />
 
 </LinearLayout>
