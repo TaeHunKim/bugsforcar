@@ -92,9 +92,9 @@ public abstract class BaseMusicActivity extends Activity implements BugsThirdPar
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-
 			String action = intent.getAction();
-			if (action.equals(META_CHANGED)) {
+				Log.d(TAG, "BR");	
+			if (action.equals(META_CHANGED)) {				
 				metaChange();
 			} else if (action.equals(BUFFERING_CHANGED)) {
 				bufferingChange(intent);
@@ -108,26 +108,21 @@ public abstract class BaseMusicActivity extends Activity implements BugsThirdPar
 			} else if (action.equals(ASYNC_OPEN_COMPLETE)) {
 				ayncOpenComplete();
 			} else if (action.equals(SHUFFLEMODE_CHANGED)) {
-//				int shufflemode = intent.getIntExtra("shufflemode", -1);
-//				shufflemodeChange(shufflemode);
 			} else if (action.equals(REPEATMODE_CHANGED)) {
-//				int repeatmode = intent.getIntExtra("repeatmode", -1);
-//				repeatmodeChange(repeatmode);
 			} else if (action.equals(PROGRESS_INFO)) {
-				long position = intent.getLongExtra("position", -1); // "현재 곡의 재생 위치"
-				long duration = intent.getLongExtra("duration", -1); // "현재 곡의 총 재생 길이"
+				long position = intent.getLongExtra("position", -1);
+				long duration = intent.getLongExtra("duration", -1);
 				progressInfo(position, duration);
 			} else if (action.equals(PLAYSTATE_INFO_NEW)) {
-
 				int playpos = intent.getIntExtra("playpos", -1);
 				int repeatmode = intent.getIntExtra("repeatmode", -1);
 				int shufflemode = intent.getIntExtra("shufflemode", -1);
 				boolean isplaying = intent.getBooleanExtra("isplaying", false);
 				boolean isPrepare = intent.getBooleanExtra("isPrepare", false);
-				String trackTitle = intent.getStringExtra("title");
-				String trackArtistNm = intent.getStringExtra("artist");
-				String trackAlbumUrl = intent.getStringExtra("url");
-
+				String trackTitle = intent.getStringExtra("trackTitle");
+				String trackArtistNm = intent.getStringExtra("trackArtistNm");
+				String trackAlbumUrl = intent.getStringExtra("trackAlbumUrl");
+				
 				playstateInfo(trackTitle, trackArtistNm, trackAlbumUrl, playpos, repeatmode, shufflemode, isplaying, isPrepare, -1);
 			}
 		}
@@ -223,7 +218,7 @@ public abstract class BaseMusicActivity extends Activity implements BugsThirdPar
 
 	// " MUSIC 정보를 요청하면 BR 로 데이터가 넘어온다. "
 	public void musicServiceInfo() {
-		sendBroadcast("info_new");
+		sendBroadcast("info");
 	}
 
 	// " 프로그래스 정보를 요청하면 BR 로 데이터가 넘어온다. "
