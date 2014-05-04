@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.net.URL;
 import java.net.URLConnection;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -15,6 +16,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -29,7 +32,7 @@ public class MainActivity extends BaseMusicActivity {
 	private AudioManager am;
 	
 	// variables for creating list
-	private Cursor mCursor;
+	private static Cursor mCursor;
 	private SampleTrackAdapter mTrackListAdapter;
 	
 	// variables for motion events
@@ -44,6 +47,10 @@ public class MainActivity extends BaseMusicActivity {
 	private TextView mTxtTitle;
 	private TextView mTxtArtist;
 	private ImageView mAlbumCover;
+	
+	// variables for searching list
+	private static final int ARTIST = 0;
+	private static final int COVER = 1;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -81,8 +88,6 @@ public class MainActivity extends BaseMusicActivity {
 					}
 					
 					mCursor = cursor;
-					
-					
 					
 					setList(cursor);				
 				}
@@ -183,17 +188,13 @@ public class MainActivity extends BaseMusicActivity {
 
 	@Override
 	protected void playstateInfo(String trackTitle, String trackArtistNm, String trackAlbumImageUrl, int playpos, int repeatmode, int shufflemode, boolean isPlaying, boolean isPrepare, int playingType) {
-		String[] metaData = new String[2];
-		
 		URL url;
 		URLConnection conn;
 		BufferedInputStream bis;
 		Bitmap bm;
 		
-		metaData = search(mCursor, playpos);
-		
 		try {	
-			url = new URL(metaData[1]);
+			url = new URL(search(mCursor, playpos, COVER));
 			conn = url.openConnection();
 			conn.connect();
 			bis = new BufferedInputStream(conn.getInputStream());
@@ -205,7 +206,7 @@ public class MainActivity extends BaseMusicActivity {
 		} catch (Exception e) {}
 		
 		mTxtTitle.setText(trackTitle);
-		mTxtArtist.setText(metaData[0]);
+		mTxtArtist.setText(search(mCursor, playpos, ARTIST));
 	}
 
 	@Override
@@ -229,22 +230,22 @@ public class MainActivity extends BaseMusicActivity {
 		if (currentVolume > 0) am.setStreamVolume(streamType, --currentVolume, AudioManager.FLAG_PLAY_SOUND);
 	}
 	
-	protected String[] search(Cursor cursor, int index) {
-		String[] result = new String[2];
-		
-		result[0] = null;
-		result[1] = null;
-		
+	protected String search(Cursor cursor, int index, int resultType) {		
 		if (cursor == null) Log.d(TAG, "void cursor");
 		else {
-			cursor.moveToFirst();
-			for (int i = 0; i < index; i++) cursor.moveToNext();
+			cursor.moveToPosition(index);
 			
-			result[0] = cursor.getString(2);
-			result[1] = cursor.getString(4);
+			switch (resultType) {
+				case ARTIST: return cursor.getString(2);
+				case COVER: return cursor.getString(4);
+			}
 		}
 		
-		return result;
+		return null;
+	}
+	
+	public static Cursor getCursor() {
+		return mCursor;
 	}
 	
 	public boolean onTouchEvent(MotionEvent event) {
@@ -280,14 +281,8 @@ public class MainActivity extends BaseMusicActivity {
 				float height = yp3 - yp1;
 				
 				if (Math.abs(width) > Math.abs(height) * RATIO) {
-					if (width < 0) {
-						updateMusicHandler(NEXT);
-						Log.d(TAG, "NEXT");
-					}
-					else {
-						updateMusicHandler(PREV);
-						Log.d(TAG, "PREV");
-					}
+					if (width < 0) updateMusicHandler(NEXT);
+					else updateMusicHandler(PREV);
 				}
 			}
 			else updateMusicHandler(PLAY);
@@ -301,5 +296,34 @@ public class MainActivity extends BaseMusicActivity {
 		}
 		
 		return false;
+	}
+	
+	public boolean onCreateOptionsMenu(Menu menu) {
+		super.onCreateOptionsMenu(menu);
+		
+		menu.add(0, 1, 0, "재생목록");
+		menu.add(0, 2, 0, "환경설정");
+		menu.add(0, 3, 0, "도움말");
+		
+		return true;
+	}
+	
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+			case 1:
+				Intent intent = new Intent(getApplicationContext(), PlayList.class);
+				
+				startActivity(intent);
+				
+				return true;
+			case 2:
+				Toast.makeText(this, "환경설정", Toast.LENGTH_SHORT).show();
+				return true;
+			case 3:
+				Toast.makeText(this, "도움말", Toast.LENGTH_SHORT).show();
+				return true;
+			default:
+				return false;
+		}
 	}
 }

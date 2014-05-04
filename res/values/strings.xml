@@ -3,5 +3,7 @@
 
     <string name="hello">Hello World, TestActivity!</string>
     <string name="app_name">Test</string>
+    <string name="title_activity_play_list">PlayList</string>
+    <string name="hello_world">Hello world!</string>
 
 </resources>

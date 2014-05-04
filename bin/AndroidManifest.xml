@@ -18,6 +18,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.neowiz.android.sample.PlayList"
+            android:label="@string/title_activity_play_list" >
+        </activity>
     </application>
 
     <uses-permission android:name="com.neowiz.android.bugs.permission.PLUGIN_MUSIC_CONTROLL" />
