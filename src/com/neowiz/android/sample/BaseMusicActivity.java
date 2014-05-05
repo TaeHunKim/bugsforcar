@@ -22,6 +22,7 @@ public abstract class BaseMusicActivity extends Activity implements BugsThirdPar
 	private static final String TAG = "BaseMusicActivity";
 	private MetaChangeReceiver mMetaChangeReceiver = new MetaChangeReceiver();
 
+	// variables for control intents
 	public static final int NEXT = 1;
 	public static final int PREV = 2;
 	public static final int PLAY = 3;
@@ -30,6 +31,10 @@ public abstract class BaseMusicActivity extends Activity implements BugsThirdPar
 	public static final int STOP = 6;
 	public static final int REPEATMODE = 7;
 	public static final int SHUFFLEMODE = 8;
+	
+	// variables for identifying requirer of music information
+	public static final int REQUEST_MAIN = 0;
+	public static final int REQUEST_PLAYLIST = 1;
 
 	private AudioManager mAudioManager;
 
@@ -93,7 +98,7 @@ public abstract class BaseMusicActivity extends Activity implements BugsThirdPar
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
-				Log.d(TAG, "BR");	
+
 			if (action.equals(META_CHANGED)) {				
 				metaChange();
 			} else if (action.equals(BUFFERING_CHANGED)) {
@@ -123,7 +128,7 @@ public abstract class BaseMusicActivity extends Activity implements BugsThirdPar
 				String trackArtistNm = intent.getStringExtra("trackArtistNm");
 				String trackAlbumUrl = intent.getStringExtra("trackAlbumUrl");
 				
-				playstateInfo(trackTitle, trackArtistNm, trackAlbumUrl, playpos, repeatmode, shufflemode, isplaying, isPrepare, -1);
+				playstateInfo(trackTitle, trackArtistNm, trackAlbumUrl, playpos, repeatmode, shufflemode, isplaying, isPrepare, -1, MainActivity.requirer);
 			}
 		}
 	}
@@ -144,7 +149,7 @@ public abstract class BaseMusicActivity extends Activity implements BugsThirdPar
 
 	protected abstract void ayncOpenComplete();
 
-	protected abstract void playstateInfo(String trackTitle, String trackArtistNm, String trackAlbumImageUrl, int playpos, int repeatmode, int shufflemode, boolean isPlaying, boolean isPrepare, int playingType);
+	protected abstract void playstateInfo(String trackTitle, String trackArtistNm, String trackAlbumImageUrl, int playpos, int repeatmode, int shufflemode, boolean isPlaying, boolean isPrepare, int playingType, int requestType);
 
 	protected abstract void progressInfo(long position, long duration);
 

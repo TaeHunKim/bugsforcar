@@ -36,7 +36,6 @@ public class PlayList extends BaseMusicActivity implements OnItemClickListener {
 	
 	private void getList() {
 		if (mCursor != null) {
-			startManagingCursor(mCursor);
 			ListAdapter listAdapter = new ListAdapter(this, mCursor);
 			mListView.setAdapter(listAdapter);
 		}
@@ -44,6 +43,12 @@ public class PlayList extends BaseMusicActivity implements OnItemClickListener {
 	
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 		sendBroadcastTracks(String.valueOf(id)+"|"+3174962);
+		
+		Intent intent = new Intent();
+		intent.putExtra("playPos", position);
+		setResult(RESULT_OK, intent);
+		
+		finish();
 	}
 	
 	protected void metaChange() {}
@@ -54,7 +59,7 @@ public class PlayList extends BaseMusicActivity implements OnItemClickListener {
 	protected void queuChange() {}
 	protected void ayncOpenStart() {}
 	protected void ayncOpenComplete() {}
-	protected void playstateInfo(String trackTitle, String trackArtistNm, String trackAlbumImageUrl, int playpos, int repeatmode, int shufflemode, boolean isPlaying, boolean isPrepare, int playingType) {}
+	protected void playstateInfo(String trackTitle, String trackArtistNm, String trackAlbumImageUrl, int playpos, int repeatmode, int shufflemode, boolean isPlaying, boolean isPrepare, int playingType, int requestType) {}
 	protected void progressInfo(long position, long duration) {}
 	
 	private class ListAdapter extends CursorAdapter {

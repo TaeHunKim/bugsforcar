@@ -52,6 +52,11 @@ public class MainActivity extends BaseMusicActivity {
 	private static final int ARTIST = 0;
 	private static final int COVER = 1;
 	
+	// variables for inter-activity communication
+	private static final int ACT_SHOW = 0;
+	private int mPlayPos = -1;
+	public static int requirer = REQUEST_MAIN;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -187,14 +192,26 @@ public class MainActivity extends BaseMusicActivity {
 	}
 
 	@Override
-	protected void playstateInfo(String trackTitle, String trackArtistNm, String trackAlbumImageUrl, int playpos, int repeatmode, int shufflemode, boolean isPlaying, boolean isPrepare, int playingType) {
+	protected void playstateInfo(String trackTitle, String trackArtistNm, String trackAlbumImageUrl, int playpos, int repeatmode, int shufflemode, boolean isPlaying, boolean isPrepare, int playingType, int requestType) {
+		int index;
 		URL url;
 		URLConnection conn;
 		BufferedInputStream bis;
 		Bitmap bm;
 		
+		switch (requestType) {
+		case REQUEST_MAIN:
+			index = playpos;
+			break;
+		case REQUEST_PLAYLIST:
+			index = mPlayPos;
+			break;
+		default:
+			index = playpos;
+		}
+		
 		try {	
-			url = new URL(search(mCursor, playpos, COVER));
+			url = new URL(search(mCursor, index, COVER));
 			conn = url.openConnection();
 			conn.connect();
 			bis = new BufferedInputStream(conn.getInputStream());
@@ -206,7 +223,9 @@ public class MainActivity extends BaseMusicActivity {
 		} catch (Exception e) {}
 		
 		mTxtTitle.setText(trackTitle);
-		mTxtArtist.setText(search(mCursor, playpos, ARTIST));
+		mTxtArtist.setText(search(mCursor, index, ARTIST));
+		
+		requirer = REQUEST_MAIN;
 	}
 
 	@Override
@@ -231,17 +250,16 @@ public class MainActivity extends BaseMusicActivity {
 	}
 	
 	protected String search(Cursor cursor, int index, int resultType) {		
-		if (cursor == null) Log.d(TAG, "void cursor");
+		if (cursor == null) return null;
 		else {
 			cursor.moveToPosition(index);
 			
 			switch (resultType) {
-				case ARTIST: return cursor.getString(2);
-				case COVER: return cursor.getString(4);
+			case ARTIST: return cursor.getString(2);
+			case COVER: return cursor.getString(4);
+			default: return null;
 			}
 		}
-		
-		return null;
 	}
 	
 	public static Cursor getCursor() {
@@ -310,20 +328,34 @@ public class MainActivity extends BaseMusicActivity {
 	
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-			case 1:
-				Intent intent = new Intent(getApplicationContext(), PlayList.class);
-				
-				startActivity(intent);
-				
-				return true;
-			case 2:
-				Toast.makeText(this, "환경설정", Toast.LENGTH_SHORT).show();
-				return true;
-			case 3:
-				Toast.makeText(this, "도움말", Toast.LENGTH_SHORT).show();
-				return true;
-			default:
-				return false;
+		case 1:
+			Intent intent = new Intent(getApplicationContext(), PlayList.class);
+			
+			startActivityForResult(intent, ACT_SHOW);
+			
+			return true;
+		case 2:
+			Toast.makeText(this, "환경설정", Toast.LENGTH_SHORT).show();
+			return true;
+		case 3:
+			Toast.makeText(this, "도움말", Toast.LENGTH_SHORT).show();
+			return true;
+		default:
+			return false;
+		}
+	}
+	
+	protected void onActivityResult (int requestCode, int resultCode, Intent data) {
+		switch (requestCode) {
+		case ACT_SHOW:
+			if (resultCode == RESULT_OK) {
+				requirer = REQUEST_PLAYLIST;
+				mPlayPos = data.getIntExtra("playPos", 0);
+				sendBroadcast(mPlayPos, "charts/track/realtime");
+			}
+			break;
+		default:
+			break;
 		}
 	}
 }
