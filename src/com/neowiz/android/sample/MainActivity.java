@@ -144,50 +144,36 @@ public class MainActivity extends BaseMusicActivity {
 
 	@Override
 	protected void metaChange() {
-		// TODO Auto-generated method stub
 		Log.d(TAG, "metaChange ");
 		musicServiceInfo();
 	}
 
 	@Override
 	protected void repeatmodeChange(int type) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	protected void shufflemodeChange(int type) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	protected void bufferingChange(Intent intent) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	protected void playStateChange(boolean isPlaying) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	protected void queuChange() {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	protected void ayncOpenStart() {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	protected void ayncOpenComplete() {
-		// TODO Auto-generated method stub
 		Log.d(TAG, "ayncOpenComplete ");
 	}
 
@@ -230,7 +216,6 @@ public class MainActivity extends BaseMusicActivity {
 
 	@Override
 	protected void progressInfo(long position, long duration) {
-		// TODO Auto-generated method stub
 		Log.d(TAG, "position " + position);
 	}
 	
@@ -303,7 +288,10 @@ public class MainActivity extends BaseMusicActivity {
 					else updateMusicHandler(PREV);
 				}
 			}
-			else updateMusicHandler(PLAY);
+			else {
+				// TODO: Pop button symbol
+				updateMusicHandler(PLAY);
+			}
 			
 			xp1 = 0;
 			xp2 = 0;
@@ -338,6 +326,7 @@ public class MainActivity extends BaseMusicActivity {
 			Toast.makeText(this, "환경설정", Toast.LENGTH_SHORT).show();
 			return true;
 		case 3:
+			// TODO: Pop Help Activity
 			Toast.makeText(this, "도움말", Toast.LENGTH_SHORT).show();
 			return true;
 		default:
