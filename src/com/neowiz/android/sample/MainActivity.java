@@ -22,7 +22,6 @@ import android.view.MotionEvent;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.neowiz.android.sample.adapter.SampleTrackAdapter;
 import com.neowiz.android.sample.task.BaseAsyncTask.OnPostExecuteListener;
 import com.neowiz.android.sample.task.TrackListTask;
@@ -57,6 +56,8 @@ public class MainActivity extends BaseMusicActivity {
 	private int mPlayPos = -1;
 	public static int requirer = REQUEST_MAIN;
 	
+	Intent i;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -71,6 +72,9 @@ public class MainActivity extends BaseMusicActivity {
 		sendBroadcast(0, "charts/track/realtime");
 		
 		musicServiceInfo();
+		
+		i = new Intent(this, VoiceRecognizeService.class);
+	    startService(i);
 	}
 
 	private void getContents(Uri uri) {

@@ -1,5 +1,10 @@
 package com.neowiz.android.sample.task;
 
+import android.content.ContentResolver;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+
 
 public class TrackListTask extends BaseAsyncTask<Uri, Integer, Cursor> {
 
