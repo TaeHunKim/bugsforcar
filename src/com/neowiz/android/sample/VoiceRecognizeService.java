@@ -35,7 +35,7 @@ import android.widget.Toast;
 
 public class VoiceRecognizeService extends Service implements BugsThirdPartyApi {
 	private static final String TAG = "VoiceRecognizeService";
-	protected static SpeechRecognizerClient.Builder builder;
+	//protected static SpeechRecognizerClient.Builder builder;
 	protected static SpeechRecognizerClient client;
 	protected final Messenger mServerMessenger = new Messenger(
 			new IncomingHandler(this));
@@ -43,8 +43,10 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 	protected boolean mIsListening;
 	protected volatile boolean mIsCountDownOn;
 
+	//static final int MSG_RECOGNIZER_START_LISTENING_FIRST = 0;
 	static final int MSG_RECOGNIZER_START_LISTENING = 1;
 	static final int MSG_RECOGNIZER_CANCEL = 2;
+	static final int MSG_RECOGNIZER_STOP = 3;
 	
 	
 	private MetaChangeReceiver mMetaChangeReceiver = new MetaChangeReceiver();
@@ -63,8 +65,11 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 	public static final int REQUEST_MAIN = 0;
 	public static final int REQUEST_PLAYLIST = 1;
 
-	private AudioManager mAudioManager;
 	
+	
+	private AudioManager am;
+	int streamType = 3;
+	float SENSITIVITY = 2;
 	
 	
 	
@@ -75,16 +80,26 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 		super.onCreate();
 
 		SpeechRecognizerManager.getInstance().initializeLibrary(this);
-		mAudioManager = (AudioManager) this.getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+		
+
 
 	}
 	
-	public void volumeChange(boolean isUp) {
-		if (isUp) {
-			mAudioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
-		} else {
-			mAudioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
-		}
+
+	
+	protected void volumeUp() {
+		am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+		int currentVolume = am.getStreamVolume(streamType);
+		int maxVolume = am.getStreamMaxVolume(streamType);
+		
+		if (currentVolume < maxVolume) am.setStreamVolume(streamType, ++currentVolume, AudioManager.FLAG_PLAY_SOUND);
+	}
+	
+	protected void volumeDown() {
+		am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+		int currentVolume = am.getStreamVolume(streamType);
+		
+		if (currentVolume > 0) am.setStreamVolume(streamType, --currentVolume, AudioManager.FLAG_PLAY_SOUND);
 	}
 
 	protected class IncomingHandler extends Handler {
@@ -99,21 +114,41 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 			final VoiceRecognizeService target = mtarget.get();
 
 			switch (msg.what) {
+				
 			case MSG_RECOGNIZER_START_LISTENING:
+				try{
+				if(target.mIsListening) {
+					if(client != null) client.cancelRecording();
+					target.mIsListening = false;
+				}
 				if (!target.mIsListening) {
 					runclient();
 				}
 
 				Log.d("message", "message start listening");
+				}
+				catch (Exception e) {
+				Log.d("message", "message start listening fail : "+e.getMessage());
+				}
 				break;
 
+			case MSG_RECOGNIZER_STOP:
+				if (target.mIsCountDownOn) {
+					target.mIsCountDownOn = false;
+					target.mNoSpeechCountDown.cancel();
+				}
+				target.mIsListening = false;
+				if(client != null) client.stopRecording();
+				Log.d("message", "message stopped recognizer"); //$NON-NLS-1$
+				break;
+				
 			case MSG_RECOGNIZER_CANCEL:
 				if (target.mIsCountDownOn) {
 					target.mIsCountDownOn = false;
 					target.mNoSpeechCountDown.cancel();
 				}
 				target.mIsListening = false;
-				client.stopRecording();
+				if(client != null) client.cancelRecording();
 				Log.d("message", "message canceled recognizer"); //$NON-NLS-1$
 				break;
 			default:
@@ -135,7 +170,7 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 		@Override
 		public void onFinish() {
 			mIsCountDownOn = false;
-			Message message = Message.obtain(null, MSG_RECOGNIZER_CANCEL);
+			Message message = Message.obtain(null, MSG_RECOGNIZER_STOP);
 			try {
 				mServerMessenger.send(message);
 			} catch (RemoteException e) {
@@ -167,7 +202,7 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 		}
 		registerBr();
 
-		return START_NOT_STICKY;
+		return START_REDELIVER_INTENT;
 	}
 	
 	private void registerBr() {
@@ -190,10 +225,10 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 
 
 	public void runclient() {
-		builder = new SpeechRecognizerClient.Builder().setApiKey(
-				"df7574b13b34c11dac7e5efb3d31ed4a").setGlobalTimeOut(99); // 발급받은
-																			// api
-																			// key
+		client = null;
+		SpeechRecognizerClient.Builder builder = new SpeechRecognizerClient.Builder().setApiKey(
+				"df7574b13b34c11dac7e5efb3d31ed4a").setGlobalTimeOut(6); // 발급받은 api key
+		
 		client = builder.build();
 		client.setSpeechRecognizeListener(new SpeechRecognizeListener() {
 			@Override
@@ -212,7 +247,7 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 			@Override
 			public void onEndOfSpeech() {
 				// mIsListening = false;
-				Message message = Message.obtain(null, MSG_RECOGNIZER_CANCEL);
+				Message message = Message.obtain(null, MSG_RECOGNIZER_STOP);
 				try {
 					mServerMessenger.send(message);
 				} catch (RemoteException e) {
@@ -230,57 +265,76 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 					mNoSpeechCountDown.cancel();
 				}
 				mIsListening = false;
+				//client = null;
 				Message message = Message.obtain(null,
-						MSG_RECOGNIZER_START_LISTENING);
+						MSG_RECOGNIZER_CANCEL);
 				try {
 					mServerMessenger.send(message);
-					// message = Message.obtain(null,
-					// MSG_RECOGNIZER_START_LISTENING);
-					// mServerMessenger.send(message);
+					message = Message.obtain(null,
+					MSG_RECOGNIZER_START_LISTENING);
+					mServerMessenger.send(message);
 				} catch (RemoteException e) {
 
 				}
+				
 				Log.d("voicerecognizetest", "error = " + errorCode + " "
 						+ errorMsg);
 			}
 
 			@Override
 			public void onResults(Bundle results) {
-				String key = "";
-				key = SpeechRecognizerClient.KEY_RECOGNITION_RESULTS;
+				String key = SpeechRecognizerClient.KEY_RECOGNITION_RESULTS;
 				ArrayList<String> mResult = results.getStringArrayList(key);
 				//String[] rs = new String[mResult.size()];
 				//mResult.toArray(rs);
 				if(mResult.size() > 0) {
 				for(String rt : mResult) {
 					Log.d(TAG, rt);
-					if(rt.equalsIgnoreCase("재생")) {
+					if(rt.compareTo("재생") == 0) {
 						updateMusicHandler(PLAY);
 						Log.d(TAG, "play");
 						break;
 					}
 					
-					if(rt.equalsIgnoreCase("정지")) {
+					if(rt.indexOf("일시") >= 0) {
 						updateMusicHandler(PAUSE);
 						Log.d(TAG, "PAUSE");
 						break;
 					}
-					if(rt.equalsIgnoreCase("다음")) {
+					if(rt.compareTo("다음") == 0) {
 						updateMusicHandler(NEXT);
 						Log.d(TAG, "NEXT");
 						break;
 					}
-					if(rt.equalsIgnoreCase("이전")) {
+					if(rt.compareTo("이전") == 0) {
+						updateMusicHandler(PREV);
 						updateMusicHandler(PREV);
 						Log.d(TAG, "PREV");
 						break;
 					}
+					if(rt.compareTo("정지") == 0) {
+						updateMusicHandler(STOP);
+						Log.d(TAG, "STOP");
+						break;
+					}
+					if(rt.indexOf("올려") >= 0 || rt.indexOf("높여") >= 0) {
+						volumeUp();
+						Log.d(TAG, "v_up");
+						break;
+					}
+					if(rt.indexOf("내려") >= 0 || rt.indexOf("낮춰") >= 0) {
+						volumeDown();
+						Log.d(TAG, "v_down");
+						break;
+					}
 					
 				}
+				
 				}
 				//if(mResult.contains("재생")) updateMusicHandler(PLAY);
 				//if(mResult.contains("정지")) updateMusicHandler(STOP);
 				// mIsCountDownOn = false;
+				//client = null;
 				Log.d("voicerecognize", "onResults" + mResult.toString());
 
 				// client.startRecording(false);
@@ -296,7 +350,7 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 
 			@Override
 			public void onFinished() {
-				Log.d("voicerecognize", "onFinished");
+				
 				mIsListening = false;
 				Message message = Message.obtain(null,
 						MSG_RECOGNIZER_START_LISTENING);
@@ -305,6 +359,7 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 				} catch (RemoteException e) {
 
 				}
+				Log.d("voicerecognize", "onFinished");
 				// TODO Auto-generated method stub
 				// client.startRecording(false);
 
@@ -325,6 +380,20 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 				 */
 				//if(arg0 == "재생") updateMusicHandler(PLAY);
 				//if(arg0 == "정지") updateMusicHandler(STOP);
+				/*if(arg0.compareTo("재생") == 0|| arg0.compareTo("정지") == 0 || arg0.compareTo("다음")  == 0|| arg0.compareTo("이전") == 0) {*/
+				if(arg0.length() >= 4) {
+					Message message = Message.obtain(null,
+							MSG_RECOGNIZER_STOP);
+					try {
+						mServerMessenger.send(message);
+						// message = Message.obtain(null,
+						// MSG_RECOGNIZER_START_LISTENING);
+						// mServerMessenger.send(message);
+					} catch (RemoteException e) {
+
+					}	
+				}
+				Log.d("voicerecognize", "onpartialResults : " + arg0); //$NON-NLS-1$
 			}
 
 			@Override
@@ -337,14 +406,13 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 				mIsCountDownOn = true;
 				mNoSpeechCountDown.start();
 				Log.d("voicerecognize", "onReady"); //$NON-NLS-1$
-
 			}
 
 		});
 
-		// target.mSpeechRecognizer.startListening(target.mSpeechRecognizerIntent);
 		this.mIsListening = true;
 		client.startRecording(false);
+
 		//$NON-NLS-1$
 
 	}
