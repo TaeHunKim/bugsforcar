@@ -1,12 +1,8 @@
 package com.neowiz.android.sample;
 
-import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
-
-import com.neowiz.android.sample.BaseMusicActivity.MetaChangeReceiver;
 
 import net.daum.mf.speech.api.SpeechRecognizeListener;
 import net.daum.mf.speech.api.SpeechRecognizerClient;
@@ -16,10 +12,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.AudioManager;
-import android.os.Build;
+import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -27,11 +21,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.speech.RecognitionListener;
-import android.speech.RecognizerIntent;
-import android.speech.SpeechRecognizer;
 import android.util.Log;
-import android.widget.Toast;
 
 public class VoiceRecognizeService extends Service implements BugsThirdPartyApi {
 	private static final String TAG = "VoiceRecognizeService";
@@ -65,7 +55,7 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 	public static final int REQUEST_MAIN = 0;
 	public static final int REQUEST_PLAYLIST = 1;
 
-	
+	public static int library_release; 
 	
 	private AudioManager am;
 	int streamType = 3;
@@ -78,8 +68,9 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 	@Override
 	public void onCreate() {
 		super.onCreate();
-
+		am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 		SpeechRecognizerManager.getInstance().initializeLibrary(this);
+		library_release = 0;
 		
 
 
@@ -88,7 +79,7 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 
 	
 	protected void volumeUp() {
-		am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+		
 		int currentVolume = am.getStreamVolume(streamType);
 		int maxVolume = am.getStreamMaxVolume(streamType);
 		
@@ -96,7 +87,7 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 	}
 	
 	protected void volumeDown() {
-		am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+		//am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 		int currentVolume = am.getStreamVolume(streamType);
 		
 		if (currentVolume > 0) am.setStreamVolume(streamType, --currentVolume, AudioManager.FLAG_PLAY_SOUND);
@@ -117,6 +108,17 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 				
 			case MSG_RECOGNIZER_START_LISTENING:
 				try{
+					
+					if(library_release > 9) {
+						SpeechRecognizerManager.getInstance().finalizeLibrary();
+						SpeechRecognizerManager.getInstance().initializeLibrary(VoiceRecognizeService.this);
+						library_release = 0;
+						Log.d("message", "library release");
+					}
+					else {
+						library_release++;
+					}
+					
 				if(target.mIsListening) {
 					if(client != null) client.cancelRecording();
 					target.mIsListening = false;
@@ -405,7 +407,8 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 				}
 				mIsCountDownOn = true;
 				mNoSpeechCountDown.start();
-				Log.d("voicerecognize", "onReady"); //$NON-NLS-1$
+				
+				Log.d("voicerecognize", "onReady : "); //$NON-NLS-1$
 			}
 
 		});

@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.net.URL;
 import java.net.URLConnection;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -15,13 +16,17 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.neowiz.android.sample.adapter.SampleTrackAdapter;
 import com.neowiz.android.sample.task.BaseAsyncTask.OnPostExecuteListener;
 import com.neowiz.android.sample.task.TrackListTask;
@@ -58,6 +63,7 @@ public class MainActivity extends BaseMusicActivity {
 	
 	Intent i;
 	
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -72,6 +78,8 @@ public class MainActivity extends BaseMusicActivity {
 		sendBroadcast(0, "charts/track/realtime");
 		
 		musicServiceInfo();
+		
+		 getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		
 		i = new Intent(this, VoiceRecognizeService.class);
 	    startService(i);
