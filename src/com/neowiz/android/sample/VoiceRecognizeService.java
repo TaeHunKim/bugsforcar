@@ -1,19 +1,17 @@
 package com.neowiz.android.sample;
 
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-
 import net.daum.mf.speech.api.SpeechRecognizeListener;
 import net.daum.mf.speech.api.SpeechRecognizerClient;
 import net.daum.mf.speech.api.SpeechRecognizerManager;
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
-import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -55,8 +53,6 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 	public static final int REQUEST_MAIN = 0;
 	public static final int REQUEST_PLAYLIST = 1;
 
-	public static int library_release; 
-	
 	private AudioManager am;
 	int streamType = 3;
 	float SENSITIVITY = 2;
@@ -70,10 +66,6 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 		super.onCreate();
 		am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 		SpeechRecognizerManager.getInstance().initializeLibrary(this);
-		library_release = 0;
-		
-
-
 	}
 	
 
@@ -92,9 +84,17 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 		
 		if (currentVolume > 0) am.setStreamVolume(streamType, --currentVolume, AudioManager.FLAG_PLAY_SOUND);
 	}
+	
+	class RecognizeThread extends Thread {
+		public void run() {
+			runclient();
+		}
+		
+	}
 
 	protected class IncomingHandler extends Handler {
 		private WeakReference<VoiceRecognizeService> mtarget;
+
 
 		IncomingHandler(VoiceRecognizeService target) {
 			mtarget = new WeakReference<VoiceRecognizeService>(target);
@@ -109,22 +109,13 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 			case MSG_RECOGNIZER_START_LISTENING:
 				try{
 					
-					if(library_release > 9) {
-						SpeechRecognizerManager.getInstance().finalizeLibrary();
-						SpeechRecognizerManager.getInstance().initializeLibrary(VoiceRecognizeService.this);
-						library_release = 0;
-						Log.d("message", "library release");
-					}
-					else {
-						library_release++;
-					}
-					
 				if(target.mIsListening) {
 					if(client != null) client.cancelRecording();
 					target.mIsListening = false;
 				}
 				if (!target.mIsListening) {
-					runclient();
+					RecognizeThread thread = new RecognizeThread();
+					thread.start();
 				}
 
 				Log.d("message", "message start listening");
@@ -161,7 +152,7 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 	}
 
 	// Count down timer for Jelly Bean work around
-	protected CountDownTimer mNoSpeechCountDown = new CountDownTimer(5000, 5000) {
+	protected CountDownTimer mNoSpeechCountDown = new CountDownTimer(10000, 10000) {
 
 		@Override
 		public void onTick(long millisUntilFinished) {
@@ -229,7 +220,7 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 	public void runclient() {
 		client = null;
 		SpeechRecognizerClient.Builder builder = new SpeechRecognizerClient.Builder().setApiKey(
-				"df7574b13b34c11dac7e5efb3d31ed4a").setGlobalTimeOut(6); // 발급받은 api key
+				"df7574b13b34c11dac7e5efb3d31ed4a").setGlobalTimeOut(11); // 발급받은 api key
 		
 		client = builder.build();
 		client.setSpeechRecognizeListener(new SpeechRecognizeListener() {
@@ -383,7 +374,7 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 				//if(arg0 == "재생") updateMusicHandler(PLAY);
 				//if(arg0 == "정지") updateMusicHandler(STOP);
 				/*if(arg0.compareTo("재생") == 0|| arg0.compareTo("정지") == 0 || arg0.compareTo("다음")  == 0|| arg0.compareTo("이전") == 0) {*/
-				if(arg0.length() >= 4) {
+				if((arg0.length() >= 4) || (!arg0.startsWith("볼") && arg0.length() >= 2)) {
 					Message message = Message.obtain(null,
 							MSG_RECOGNIZER_STOP);
 					try {

@@ -5,8 +5,10 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -19,6 +21,7 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -64,6 +67,10 @@ public class MainActivity extends BaseMusicActivity {
 	Intent i;
 	
 
+	
+	
+	
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -359,4 +366,48 @@ public class MainActivity extends BaseMusicActivity {
 			break;
 		}
 	}
+	
+	@Override
+	public void onDestroy() {
+		stopService(i);
+		updateMusicHandler(PAUSE);
+		super.onDestroy();
+	}
+	
+	//하드웨어 뒤로가기버튼 이벤트 설정.
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		
+		switch (keyCode) {
+		//하드웨어 뒤로가기 버튼에 따른 이벤트 설정
+		case KeyEvent.KEYCODE_BACK:
+			
+			//Toast.makeText(this, "뒤로가기버튼 눌림", Toast.LENGTH_SHORT).show();
+			
+			new AlertDialog.Builder(this)
+			.setTitle("프로그램 종료")
+			.setMessage("프로그램을 종료 하시겠습니까?")
+			.setPositiveButton("예", new DialogInterface.OnClickListener() {
+				
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					// 프로세스 종료.
+					stopService(i);
+					updateMusicHandler(PAUSE);
+					android.os.Process.killProcess(android.os.Process.myPid());
+				}
+			})
+			.setNegativeButton("아니오", null)
+			.show();
+			
+			break;
+
+		default:
+			break;
+		}
+		
+		return super.onKeyDown(keyCode, event);
+	}
+
 }
+
