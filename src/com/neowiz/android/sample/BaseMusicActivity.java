@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.widget.Toast;
 
 /**
  * 벅스 Third-Party App
@@ -38,6 +39,16 @@ public abstract class BaseMusicActivity extends Activity implements BugsThirdPar
 
 	private AudioManager mAudioManager;
 
+	public static Toast t = null;
+	
+	public void setToast(String m) {
+		if(t == null) t = Toast.makeText(this, m, Toast.LENGTH_SHORT);
+		else t.setText(m);
+		
+		t.show();
+	}
+	
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -104,6 +115,7 @@ public abstract class BaseMusicActivity extends Activity implements BugsThirdPar
 			} else if (action.equals(BUFFERING_CHANGED)) {
 				bufferingChange(intent);
 			} else if (action.equals(PLAYSTATE_CHANGED)) {
+				playStateChange(intent.getBooleanExtra("isplaying", false));
 			} else if (action.equals(PLAYBACK_COMPLETE)) {
 				playStateChange(intent.getBooleanExtra("isplaying", false));
 			} else if (action.equals(QUEUE_CHANGED)) {
@@ -198,15 +210,19 @@ public abstract class BaseMusicActivity extends Activity implements BugsThirdPar
 	}
 
 	private void musicPrev() {
+		setToast("이전 곡을 재생합니다");
 		sendBroadcast("previous");
 	}
 
 	private void musicNext() {
+		setToast("다음 곡을 재생합니다");
 		sendBroadcast("next");
 	}
 
 	private void musicPlay() {
+		setToast("현재 곡을 재생 / 정지합니다");
 		sendBroadcast("togglepause");
+		Log.d(TAG, "togglepause");
 	}
 
 	private void musicOpen(int position) {
@@ -214,11 +230,15 @@ public abstract class BaseMusicActivity extends Activity implements BugsThirdPar
 	}
 
 	private void musicPause() {
+		setToast("재생을 일시정지합니다");
 		sendBroadcast("pause");
+		Log.d(TAG, "pause");
 	}
 
 	private void musicStop() {
+		setToast("재생을 정지합니다");
 		sendBroadcast("stop");
+		Log.d(TAG, "stop");
 	}
 
 	// " MUSIC 정보를 요청하면 BR 로 데이터가 넘어온다. "

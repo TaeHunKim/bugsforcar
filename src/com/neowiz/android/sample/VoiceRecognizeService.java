@@ -2,6 +2,7 @@ package com.neowiz.android.sample;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+
 import net.daum.mf.speech.api.SpeechRecognizeListener;
 import net.daum.mf.speech.api.SpeechRecognizerClient;
 import net.daum.mf.speech.api.SpeechRecognizerManager;
@@ -20,6 +21,7 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
+import android.widget.Toast;
 
 public class VoiceRecognizeService extends Service implements BugsThirdPartyApi {
 	private static final String TAG = "VoiceRecognizeService";
@@ -48,6 +50,8 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 	public static final int STOP = 6;
 	public static final int REPEATMODE = 7;
 	public static final int SHUFFLEMODE = 8;
+	public static final int VOLUMEUP = 9;
+	public static final int VOLUMEDOWN = 10;
 	
 	// variables for identifying requirer of music information
 	public static final int REQUEST_MAIN = 0;
@@ -57,7 +61,14 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 	int streamType = 3;
 	float SENSITIVITY = 2;
 	
+	public static Toast t = null;
 	
+	public void setToast(String m) {
+		if(t == null) t = Toast.makeText(this, m, Toast.LENGTH_SHORT);
+		else t.setText(m);
+		
+		t.show();
+	}
 	
 	
 
@@ -76,13 +87,14 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 		int maxVolume = am.getStreamMaxVolume(streamType);
 		
 		if (currentVolume < maxVolume) am.setStreamVolume(streamType, ++currentVolume, AudioManager.FLAG_PLAY_SOUND);
+		setToast("볼륨을 높입니다");
 	}
 	
 	protected void volumeDown() {
 		//am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 		int currentVolume = am.getStreamVolume(streamType);
-		
 		if (currentVolume > 0) am.setStreamVolume(streamType, --currentVolume, AudioManager.FLAG_PLAY_SOUND);
+		setToast("볼륨을 낮춥니다");
 	}
 	
 	class RecognizeThread extends Thread {
@@ -195,7 +207,7 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 		}
 		registerBr();
 
-		return START_REDELIVER_INTENT;
+		return START_STICKY;
 	}
 	
 	private void registerBr() {
@@ -220,7 +232,8 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 	public void runclient() {
 		client = null;
 		SpeechRecognizerClient.Builder builder = new SpeechRecognizerClient.Builder().setApiKey(
-				"df7574b13b34c11dac7e5efb3d31ed4a").setGlobalTimeOut(11); // 발급받은 api key
+				"df7574b13b34c11dac7e5efb3d31ed4a").setServiceType(SpeechRecognizerClient.SERVICE_TYPE_WORD).setGlobalTimeOut(11)
+				.setUserDictionary("재생\n정지\n다음\n이전\n올려\n내려\n높여\n낮춰"); // 발급받은 api key
 		
 		client = builder.build();
 		client.setSpeechRecognizeListener(new SpeechRecognizeListener() {
@@ -283,40 +296,39 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 				if(mResult.size() > 0) {
 				for(String rt : mResult) {
 					Log.d(TAG, rt);
-					if(rt.compareTo("재생") == 0) {
+					if(rt.indexOf("재생") >= 0) {
 						updateMusicHandler(PLAY);
 						Log.d(TAG, "play");
 						break;
 					}
 					
-					if(rt.indexOf("일시") >= 0) {
+					if(rt.indexOf("정지") >= 0) {
 						updateMusicHandler(PAUSE);
 						Log.d(TAG, "PAUSE");
 						break;
 					}
-					if(rt.compareTo("다음") == 0) {
+					if(rt.indexOf("다음") >= 0) {
 						updateMusicHandler(NEXT);
 						Log.d(TAG, "NEXT");
 						break;
 					}
-					if(rt.compareTo("이전") == 0) {
-						updateMusicHandler(PREV);
+					if(rt.indexOf("이전") >= 0) {
 						updateMusicHandler(PREV);
 						Log.d(TAG, "PREV");
 						break;
 					}
-					if(rt.compareTo("정지") == 0) {
+					/*if(rt.compareTo("정지") == 0) {
 						updateMusicHandler(STOP);
 						Log.d(TAG, "STOP");
 						break;
-					}
+					}*/
 					if(rt.indexOf("올려") >= 0 || rt.indexOf("높여") >= 0) {
-						volumeUp();
+						updateMusicHandler(VOLUMEUP);
 						Log.d(TAG, "v_up");
 						break;
 					}
 					if(rt.indexOf("내려") >= 0 || rt.indexOf("낮춰") >= 0) {
-						volumeDown();
+						updateMusicHandler(VOLUMEDOWN);
 						Log.d(TAG, "v_down");
 						break;
 					}
@@ -374,7 +386,7 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 				//if(arg0 == "재생") updateMusicHandler(PLAY);
 				//if(arg0 == "정지") updateMusicHandler(STOP);
 				/*if(arg0.compareTo("재생") == 0|| arg0.compareTo("정지") == 0 || arg0.compareTo("다음")  == 0|| arg0.compareTo("이전") == 0) {*/
-				if((arg0.length() >= 4) || (!arg0.startsWith("볼") && arg0.length() >= 2)) {
+				if(arg0.length() >= 2) {
 					Message message = Message.obtain(null,
 							MSG_RECOGNIZER_STOP);
 					try {
@@ -523,6 +535,12 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 			case SHUFFLEMODE:
 				musicShufflemode(msg.arg1);
 				break;
+			case VOLUMEUP:
+				volumeUp();
+				break;
+			case VOLUMEDOWN:
+				volumeDown();
+				break;
 			}
 		}
 	};
@@ -540,14 +558,17 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 	}
 
 	private void musicPrev() {
+		setToast("이전 곡을 재생합니다");
 		sendBroadcast("previous");
 	}
 
 	private void musicNext() {
+		setToast("다음 곡을 재생합니다");
 		sendBroadcast("next");
 	}
 
 	private void musicPlay() {
+		setToast("현재 곡을 재생 / 정지합니다");
 		sendBroadcast("togglepause");
 		Log.d(TAG, "togglepause");
 	}
@@ -557,11 +578,13 @@ public class VoiceRecognizeService extends Service implements BugsThirdPartyApi 
 	}
 
 	private void musicPause() {
+		setToast("재생을 일시정지합니다");
 		sendBroadcast("pause");
 		Log.d(TAG, "pause");
 	}
 
 	private void musicStop() {
+		setToast("재생을 정지합니다");
 		sendBroadcast("stop");
 		Log.d(TAG, "stop");
 	}

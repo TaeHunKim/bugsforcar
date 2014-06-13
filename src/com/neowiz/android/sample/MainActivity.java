@@ -66,6 +66,8 @@ public class MainActivity extends BaseMusicActivity {
 	
 	Intent i;
 	
+	boolean isplaying;
+	
 
 	
 	
@@ -74,6 +76,7 @@ public class MainActivity extends BaseMusicActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		isplaying = false; 
 		setContentView(R.layout.main);
 
 		mTxtTitle = (TextView) findViewById(R.id.txt_title);
@@ -181,6 +184,7 @@ public class MainActivity extends BaseMusicActivity {
 
 	@Override
 	protected void playStateChange(boolean isPlaying) {
+		isplaying = isPlaying;
 	}
 
 	@Override
@@ -203,6 +207,8 @@ public class MainActivity extends BaseMusicActivity {
 		URLConnection conn;
 		BufferedInputStream bis;
 		Bitmap bm;
+		
+		isplaying = isPlaying;
 		
 		switch (requestType) {
 		case REQUEST_MAIN:
@@ -244,6 +250,7 @@ public class MainActivity extends BaseMusicActivity {
 		int maxVolume = am.getStreamMaxVolume(streamType);
 		
 		if (currentVolume < maxVolume) am.setStreamVolume(streamType, ++currentVolume, AudioManager.FLAG_PLAY_SOUND);
+		setToast("볼륨을 높입니다");
 	}
 	
 	protected void volumeDown() {
@@ -251,6 +258,7 @@ public class MainActivity extends BaseMusicActivity {
 		int currentVolume = am.getStreamVolume(streamType);
 		
 		if (currentVolume > 0) am.setStreamVolume(streamType, --currentVolume, AudioManager.FLAG_PLAY_SOUND);
+		setToast("볼륨을 낮춥니다");
 	}
 	
 	protected String search(Cursor cursor, int index, int resultType) {		
@@ -342,11 +350,11 @@ public class MainActivity extends BaseMusicActivity {
 			
 			return true;
 		case 2:
-			Toast.makeText(this, "환경설정", Toast.LENGTH_SHORT).show();
+			setToast("환경설정");
 			return true;
 		case 3:
 			// TODO: Pop Help Activity
-			Toast.makeText(this, "도움말", Toast.LENGTH_SHORT).show();
+			setToast("도움말");
 			return true;
 		default:
 			return false;
@@ -408,6 +416,8 @@ public class MainActivity extends BaseMusicActivity {
 		
 		return super.onKeyDown(keyCode, event);
 	}
+	
+	
 
 }
 
