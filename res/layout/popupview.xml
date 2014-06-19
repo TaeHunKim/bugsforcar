@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:id="@+id/popup"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    
+    <Button 
+        android:id="@+id/btntop100"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Top 100"
+        />
+
+    <Button
+        android:id="@+id/btnrealtime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="실시간 차트" />
+
+     <Button 
+        android:id="@+id/btndaily"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="일간 차트"
+        />
+
+     <Button
+         android:id="@+id/btnsave"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:text="저장한 곡" />
+     <Button
+         android:id="@+id/btncancel"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:text="닫기" />
+
+</LinearLayout>

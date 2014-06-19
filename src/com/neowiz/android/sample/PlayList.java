@@ -42,7 +42,7 @@ public class PlayList extends BaseMusicActivity implements OnItemClickListener {
 	}
 	
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-		sendBroadcastTracks(String.valueOf(id)+"|"+3174962);
+		//sendBroadcastTracks(String.valueOf(id)+"|"+3174962);
 		
 		Intent intent = new Intent();
 		intent.putExtra("playPos", position);

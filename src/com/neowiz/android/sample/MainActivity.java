@@ -21,12 +21,18 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -68,7 +74,8 @@ public class MainActivity extends BaseMusicActivity {
 	
 	boolean isplaying;
 	
-
+	PopupWindow popup;
+	View popupview;
 	
 	
 	
@@ -83,9 +90,11 @@ public class MainActivity extends BaseMusicActivity {
 		mTxtArtist = (TextView) findViewById(R.id.txt_artist);
 		mAlbumCover = (ImageView) findViewById(R.id.album_cover);
 		
-		getContents(CONTENT_URI_CHARTLIST);
+		sendBroadcast(0, "charts/track/top1000");
 		
-		sendBroadcast(0, "charts/track/realtime");
+		getContents(CONTENT_URI_PLAYLIST);
+		getContents(CONTENT_URI_PLAYLIST);
+		sendBroadcast("open","playpos",0);
 		
 		musicServiceInfo();
 		
@@ -93,6 +102,8 @@ public class MainActivity extends BaseMusicActivity {
 		
 		i = new Intent(this, VoiceRecognizeService.class);
 	    startService(i);
+	    popupview = View.inflate(this, R.layout.popupview, null);
+	    popup = new PopupWindow(popupview,RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT,true);
 	}
 
 	private void getContents(Uri uri) {
@@ -335,8 +346,9 @@ public class MainActivity extends BaseMusicActivity {
 		super.onCreateOptionsMenu(menu);
 		
 		menu.add(0, 1, 0, "재생목록");
-		menu.add(0, 2, 0, "환경설정");
-		menu.add(0, 3, 0, "도움말");
+		menu.add(0, 2, 0, "목록 바꾸기");
+		menu.add(0, 3, 0, "환경설정");
+		menu.add(0, 4, 0, "도움말");
 		
 		return true;
 	}
@@ -350,9 +362,12 @@ public class MainActivity extends BaseMusicActivity {
 			
 			return true;
 		case 2:
-			setToast("환경설정");
+			changeList();
 			return true;
 		case 3:
+			setToast("환경설정");
+			return true;
+		case 4:
 			// TODO: Pop Help Activity
 			setToast("도움말");
 			return true;
@@ -361,13 +376,101 @@ public class MainActivity extends BaseMusicActivity {
 		}
 	}
 	
+	public void changeList() {
+		popup.showAtLocation((LinearLayout)findViewById(R.id.main), Gravity.CENTER, 0, 0);
+		
+		Button btnrealtime = (Button)popupview.findViewById(R.id.btnrealtime);
+		btnrealtime.setOnClickListener(new Button.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				sendBroadcast(0, "charts/track/realtime");
+				
+				getContents(CONTENT_URI_PLAYLIST);
+				getContents(CONTENT_URI_PLAYLIST);
+				
+				musicServiceInfo();
+				
+				sendBroadcast("open","playpos",0);
+				popup.dismiss();
+			}
+			
+		});
+		
+		Button btntop100 = (Button)popupview.findViewById(R.id.btntop100);
+		btntop100.setOnClickListener(new Button.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				sendBroadcast(0, "charts/track/top1000");
+				
+				getContents(CONTENT_URI_PLAYLIST);
+				getContents(CONTENT_URI_PLAYLIST);
+				
+				musicServiceInfo();
+				
+				sendBroadcast("open","playpos",0);
+				popup.dismiss();
+			}
+			
+		});
+		
+		Button btnsave = (Button)popupview.findViewById(R.id.btnsave);
+		btnsave.setOnClickListener(new Button.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				//sendBroadcast(0, "charts/track/realtime");
+				
+				getContents(CONTENT_URI_SAVELIST);
+				
+				musicServiceInfo();
+				
+				sendBroadcast("open","playpos",0);
+				popup.dismiss();
+			}
+			
+		});
+		
+		Button btndaily = (Button)popupview.findViewById(R.id.btndaily);
+		btndaily.setOnClickListener(new Button.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				sendBroadcast(0, "charts/track/daily");
+				
+				getContents(CONTENT_URI_PLAYLIST);
+				getContents(CONTENT_URI_PLAYLIST);
+				
+				musicServiceInfo();
+				
+				sendBroadcast("open","playpos",0);
+				popup.dismiss();
+			}
+			
+		});
+		Button btncancel = (Button)popupview.findViewById(R.id.btncancel);
+		btncancel.setOnClickListener(new Button.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				popup.dismiss();
+			}
+			
+		});
+	}
+	
 	protected void onActivityResult (int requestCode, int resultCode, Intent data) {
 		switch (requestCode) {
 		case ACT_SHOW:
 			if (resultCode == RESULT_OK) {
 				requirer = REQUEST_PLAYLIST;
 				mPlayPos = data.getIntExtra("playPos", 0);
-				sendBroadcast(mPlayPos, "charts/track/realtime");
+				sendBroadcast("open","playpos",mPlayPos);
 			}
 			break;
 		default:

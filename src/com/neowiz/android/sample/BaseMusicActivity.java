@@ -266,7 +266,7 @@ public abstract class BaseMusicActivity extends Activity implements BugsThirdPar
 		this.getApplicationContext().sendBroadcast(intent);
 	}
 
-	private void sendBroadcast(String cmd, String extraCmd, int args1) {
+	protected void sendBroadcast(String cmd, String extraCmd, int args1) {
 		Log.d(TAG, extraCmd + ", " + args1);
 		Intent intent = new Intent(MEDIA_MESSAGE);
 		intent.putExtra("command", cmd);
